@@ -2,211 +2,360 @@
 #include <windows.h>
 #include <cstdlib>
 #include <fstream>
+#include <vector>
+#include <string>
 
 using namespace std;
 
-struct daneZnajomych
+struct Adresat
 {
-    string imie, nazwisko, numerTelefonu, email, adres;
     int idZapisanegoKontaktu;
+    string imie, nazwisko, numerTelefonu, email, adres;
 };
 
-int zapisanieNowejOsoby (daneZnajomych znajomi[], int liczbaZnajomych)
+Adresat zapisanieNowejOsoby (vector <Adresat> &adresaci)
 {
     string imie, nazwisko, numerTelefonu, email, adres;
+    fstream plik;
+    Adresat tymczasowyZapisNowejOsoby;
+
     cout << "Podaj imie:";
-    cin >> imie;
+    cin >> tymczasowyZapisNowejOsoby.imie;
     cout << "Podaj nazwisko:";
-    cin >> nazwisko;
+    cin >> tymczasowyZapisNowejOsoby.nazwisko;
     cout << "Podaj numer telefonu:";
     cin.sync();
-    getline(cin, numerTelefonu);
+    getline(cin, tymczasowyZapisNowejOsoby.numerTelefonu);
     cout << "Podaj adres:";
     cin.sync();
-    getline(cin, adres);
+    getline(cin, tymczasowyZapisNowejOsoby.adres);
     cout << "Podaj e-mail:";
-    cin >> email;
+    cin >> tymczasowyZapisNowejOsoby.email;
 
-    znajomi[liczbaZnajomych].idZapisanegoKontaktu = liczbaZnajomych + 1;
-    znajomi[liczbaZnajomych].imie = imie;
-    znajomi[liczbaZnajomych].nazwisko = nazwisko;
-    znajomi[liczbaZnajomych].numerTelefonu = numerTelefonu;
-    znajomi[liczbaZnajomych].adres = adres;
-    znajomi[liczbaZnajomych].email = email;
+    int ostatniAdresat = adresaci.size()-1;
 
-    fstream plik;
+    tymczasowyZapisNowejOsoby.idZapisanegoKontaktu = adresaci[ostatniAdresat].idZapisanegoKontaktu +1;
+
     plik.open("ksiazkaadresowa.txt", ios::out | ios::app);
 
     if (plik.good() == true)
     {
-        plik << znajomi[liczbaZnajomych].idZapisanegoKontaktu << endl;
-        plik << znajomi[liczbaZnajomych].imie << endl;
-        plik << znajomi[liczbaZnajomych].nazwisko << endl;
-        plik << znajomi[liczbaZnajomych].numerTelefonu << endl;
-        plik << znajomi[liczbaZnajomych].adres << endl;
-        plik << znajomi[liczbaZnajomych].email << endl;
+        plik << tymczasowyZapisNowejOsoby.idZapisanegoKontaktu <<'|';
+        plik << tymczasowyZapisNowejOsoby.imie << '|';
+        plik << tymczasowyZapisNowejOsoby.nazwisko << '|';
+        plik << tymczasowyZapisNowejOsoby.numerTelefonu << '|';
+        plik << tymczasowyZapisNowejOsoby.adres << '|';
+        plik << tymczasowyZapisNowejOsoby.email << '|' << endl;
         plik.close();
     }
     else
     {
-        cout << "Nie uda³o sie otworzyc pliku i zapisac do niego danych." << endl;
+        cout << "Nie udalo sie otworzyc pliku i zapisac do niego danych." << endl;
         system ("pause");
     }
 
-    cout << "Nowy kontakt zostal dodany do ksiazki adresowej"<< endl;
+    cout << "Nowy kontakt zostal dodany do ksiazki adresowej" << endl;
     Sleep(1000);
-    return liczbaZnajomych+1;
+
+    return tymczasowyZapisNowejOsoby;
 }
 
-int wczytajLiczbeZnajomych (daneZnajomych znajomi[])
+Adresat zapiszPobranaLinieDoStruktury (string linia)
 {
-    string linia;
-    int nr_linii = 1;
-    int liczbaZnajomych = 0;
+    Adresat tymczasowy;
+    string znakOddzielenia = "";
+    string idZapisanegoKontaktu ="";
+    string imie ="";
+    string nazwisko = "";
+    string numerTelefonu = "";
+    string email ="";
+    string adres = "";
 
+    for (int i = 0; i < linia.length(); i++)
+    {
+        if (linia[i] == '|')
+        {
+            znakOddzielenia +=linia[i];
+        }
+        else
+        {
+            if (znakOddzielenia.length() == 0)
+                idZapisanegoKontaktu += linia[i];
+
+            else if (znakOddzielenia.length() == 1)
+                tymczasowy.imie += linia[i];
+
+            else if (znakOddzielenia.length() == 2)
+                tymczasowy.nazwisko += linia[i];
+
+            else if (znakOddzielenia.length() == 3)
+                tymczasowy.numerTelefonu+= linia[i];
+
+            else if (znakOddzielenia.length() == 4)
+                tymczasowy.adres += linia[i];
+
+            else if (znakOddzielenia.length() == 5)
+                tymczasowy.email += linia[i];
+        }
+    }
+    int idZapisanegoKontaktuInt = atoi(idZapisanegoKontaktu.c_str());
+    tymczasowy.idZapisanegoKontaktu = idZapisanegoKontaktuInt;
+    return tymczasowy;
+}
+
+vector <Adresat> wczytajZnajomych ()
+{
+    vector <Adresat> adresaci;
     fstream plik;
+    string linia;
     plik.open ("ksiazkaadresowa.txt", ios::in);
 
     if (plik.good() == true)
     {
         while (getline(plik, linia))
         {
-            switch (nr_linii)
-            {
-            case 1:
-                znajomi[liczbaZnajomych].idZapisanegoKontaktu = atoi(linia.c_str());
-                break;
-            case 2:
-                znajomi[liczbaZnajomych].imie = linia;
-                break;
-            case 3:
-                znajomi[liczbaZnajomych].nazwisko = linia;
-                break;
-            case 4:
-                znajomi[liczbaZnajomych].numerTelefonu = linia;
-                break;
-            case 5:
-                znajomi[liczbaZnajomych].adres = linia;
-                break;
-            case 6:
-                znajomi[liczbaZnajomych].email = linia;
-                break;
-            }
-            if (nr_linii >= 6)
-            {
-                nr_linii = 1;
-                liczbaZnajomych++;
-            }
-            else
-            {
-                nr_linii++;
-            }
+            adresaci.push_back(zapiszPobranaLinieDoStruktury(linia));
         }
+        plik.close();
     }
-    return liczbaZnajomych;
+    return adresaci;
 }
-
-void wyszukajWedlugImienia (daneZnajomych znajomi[], int liczbaZnajomych)
+void wyszukajWedlugImienia (vector <Adresat> &adresaci)
 {
-    string imieZnajomego;
-    cout << "Wpisz imie: ";
-    cin >> imieZnajomego;
+    string imie;
+    cout << "Podaj imie do wyszukania: " << endl;
+    cin >> imie;
 
-    for (int i = 0; i < liczbaZnajomych; i++)
+    for (int i=0; i< adresaci.size(); i++)
     {
-        if (imieZnajomego == znajomi[i].imie)
+        if (imie == adresaci[i].imie)
         {
-            cout << endl;
-            cout << znajomi[i].idZapisanegoKontaktu << endl;
-            cout << znajomi[i].imie << endl;
-            cout << znajomi[i].nazwisko<< endl;
-            cout << znajomi[i].numerTelefonu<< endl;
-            cout << znajomi[i].adres<< endl;
-            cout << znajomi[i].email << endl;
+            cout << adresaci[i].idZapisanegoKontaktu <<'|';
+            cout << adresaci[i].imie << '|';
+            cout << adresaci[i].nazwisko << '|';
+            cout << adresaci[i].numerTelefonu << '|';
+            cout << adresaci[i].adres << '|';
+            cout << adresaci[i].email << '|' << endl;
+
         }
     }
     system ("pause");
 }
 
-void wyszukajWedlugNazwiska (daneZnajomych znajomi[], int liczbaZnajomych)
+void wyszukajWedlugNazwiska (vector <Adresat> &adresaci)
 {
-    string nazwiskoZnajomego;
-    cout << "Wpisz nazwisko: ";
-    cin >> nazwiskoZnajomego;
+    string nazwisko;
+    cout << "Podaj nazwisko do wyszukania: " << endl;
+    cin >> nazwisko;
 
-    for (int i = 0; i < liczbaZnajomych; i++)
+    for (int i=0; i< adresaci.size(); i++)
     {
-        if (nazwiskoZnajomego == znajomi[i].nazwisko)
+        if (nazwisko == adresaci[i].nazwisko)
         {
-            cout << endl;
-            cout << znajomi[i].idZapisanegoKontaktu << endl;
-            cout << znajomi[i].imie << endl;
-            cout << znajomi[i].nazwisko<< endl;
-            cout << znajomi[i].numerTelefonu<< endl;
-            cout << znajomi[i].adres<< endl;
-            cout << znajomi[i].email << endl;
+            cout << adresaci[i].idZapisanegoKontaktu <<'|';
+            cout << adresaci[i].imie << '|';
+            cout << adresaci[i].nazwisko << '|';
+            cout << adresaci[i].numerTelefonu << '|';
+            cout << adresaci[i].adres << '|';
+            cout << adresaci[i].email << '|' << endl;
         }
     }
     system ("pause");
 }
 
-void wyswietlListeZnajomych (daneZnajomych znajomi [], int liczbaZnajomych)
+void wyswietlWszystkichAdresatow(vector <Adresat> &adresaci)
 {
-    for (int i = 0; i< liczbaZnajomych; i++)
+    for (int i=0; i< adresaci.size(); i++)
     {
-        cout << endl;
-        cout << znajomi[i].idZapisanegoKontaktu << endl;
-        cout << znajomi[i].imie << endl;
-        cout << znajomi[i].nazwisko<< endl;
-        cout << znajomi[i].numerTelefonu<< endl;
-        cout << znajomi[i].adres<< endl;
-        cout << znajomi[i].email << endl;
+        cout << adresaci[i].idZapisanegoKontaktu <<'|';
+        cout << adresaci[i].imie << '|';
+        cout << adresaci[i].nazwisko << '|';
+        cout << adresaci[i].numerTelefonu << '|';
+        cout << adresaci[i].adres << '|';
+        cout << adresaci[i].email << '|' << endl;
     }
-    system("pause");
+    system ("pause");
 }
 
-int main()
+void usunPlikIZapiszOdNowa (vector <Adresat> &adresaci)
 {
-    daneZnajomych znajomi [1000];
-    int liczbaZapisanychZnajomych = 0;
+    remove ("ksiazkaadresowa.txt");
+    fstream plik;
+    plik.open("ksiazkaadresowa.txt", ios::out | ios::app);
+
+    if (plik.good() == true)
+    {
+        for (int i=0; i< adresaci.size(); i++)
+        {
+            plik << adresaci[i].idZapisanegoKontaktu <<'|';
+            plik << adresaci[i].imie << '|';
+            plik << adresaci[i].nazwisko << '|';
+            plik << adresaci[i].numerTelefonu << '|';
+            plik << adresaci[i].adres << '|';
+            plik << adresaci[i].email << '|' << endl;
+        }
+        plik.close();
+    }
+}
+
+void usunAdresata (vector <Adresat> &adresaci)
+{
+    wyswietlWszystkichAdresatow(adresaci);
+    int idAdresata;
+    cout << "Wybierz ID adresata, ktorego chcesz usunac: ";
+    cin >> idAdresata;
+    for (int i =0; i< adresaci.size(); i++)
+    {
+        if (adresaci[i].idZapisanegoKontaktu == idAdresata)
+            adresaci.erase(adresaci.begin() + i);
+    }
+    usunPlikIZapiszOdNowa(adresaci);
+}
+
+void edytujInformacjeOAdreacie (vector <Adresat> &adresaci)
+{
+    int idAdresata;
+
+    wyswietlWszystkichAdresatow(adresaci);
+    cout << "Wybierz ID adresata, ktorego chcesz edytowac: ";
+    cin >> idAdresata;
+    cout << "Wybierz, ktora z inforamcji chcesz edytowac:" << endl;
+    cout << "1. Imie" << endl;
+    cout << "2. Nazwisko" << endl;
+    cout << "3. Numer telefonu" << endl;
+    cout << "4. Email" << endl;
+    cout << "5. Adres" << endl;
+    cout << "6. Podwrot do menu" << endl;
+    char wyborOpcji;
+    cin >> wyborOpcji;
+
+    switch (wyborOpcji)
+    {
+    case '1':
+    {
+        string imie;
+        cout << "Podaj nowe imie: ";
+        cin >> imie;
+
+        for (int i=0; i<adresaci.size(); i++)
+        {
+            if (adresaci[i].idZapisanegoKontaktu == idAdresata)
+            {
+                adresaci[i].imie = imie;
+            }
+        }
+        break;
+    }
+    case '2':
+    {
+        string nazwisko;
+        cout << "Podaj nowe nazwisko: ";
+        cin >> nazwisko;
+
+        for (int i=0; i<adresaci.size(); i++)
+        {
+            if (adresaci[i].idZapisanegoKontaktu == idAdresata)
+                adresaci[i].nazwisko = nazwisko;
+        }
+        break;
+    }
+    case '3':
+    {
+        string numerTelefonu;
+        cout << "Podaj nowy numer telefonu: ";
+        cin >> numerTelefonu;
+
+        for (int i=0; i<adresaci.size(); i++)
+        {
+            if (adresaci[i].idZapisanegoKontaktu == idAdresata)
+                adresaci[i].numerTelefonu = numerTelefonu;
+        }
+        break;
+    }
+    case '4':
+    {
+        string email;
+        cout << "Podaj nowy e-mail: ";
+        cin >> email;
+
+        for (int i=0; i<adresaci.size(); i++)
+        {
+            if (adresaci[i].idZapisanegoKontaktu == idAdresata)
+                adresaci[i].email = email;
+        }
+        break;
+    }
+    case '5':
+    {
+        string adres;
+        cout << "Podaj nowy adres: ";
+        cin >> adres;
+
+        for (int i=0; i<adresaci.size(); i++)
+        {
+            if (adresaci[i].idZapisanegoKontaktu == idAdresata)
+                adresaci[i].adres = adres;
+        }
+        break;
+    }
+    case '6':
+    {
+        break;
+    }
+    }
+    usunPlikIZapiszOdNowa(adresaci);
+}
+
+int main ()
+{
+    vector <Adresat> adresaci;
+    fstream plik;
     char wybor;
 
-    liczbaZapisanychZnajomych = wczytajLiczbeZnajomych(znajomi);
-    cout << liczbaZapisanychZnajomych << endl;
+    adresaci = wczytajZnajomych();
 
     while (true)
     {
         system("cls");
         cout << "1. Zapisz nowa osobe do ksiazki adresowej." << endl;
-        cout << "2. Wyszukaj znajomego wed³ug imienia." << endl;
-        cout << "3. Wyszukaj znajomego wed³ug nazwiska." << endl;
+        cout << "2. Wyszukaj znajomego wedlug imienia." << endl;
+        cout << "3. Wyszukaj znajomego wedlug nazwiska." << endl;
         cout << "4. Wyswietl cala liste znajomych."<< endl;
+        cout << "5. Usun adresata." << endl;
+        cout << "6. Edytuj adresata." << endl;
         cout << "9. Koniec pracy." << endl;
 
         cin >> wybor;
+
         if (wybor == '1')
         {
-            liczbaZapisanychZnajomych = zapisanieNowejOsoby (znajomi,liczbaZapisanychZnajomych);
+            adresaci.push_back(zapisanieNowejOsoby(adresaci));
         }
         else if (wybor == '2')
         {
-            wyszukajWedlugImienia(znajomi, liczbaZapisanychZnajomych);
+            wyszukajWedlugImienia(adresaci);
         }
         else if (wybor == '3')
         {
-            wyszukajWedlugNazwiska(znajomi, liczbaZapisanychZnajomych);
+            wyszukajWedlugNazwiska(adresaci);
         }
         else if (wybor == '4')
         {
-            wyswietlListeZnajomych(znajomi, liczbaZapisanychZnajomych);
+            wyswietlWszystkichAdresatow(adresaci);
         }
-
+        else if (wybor == '5')
+        {
+            usunAdresata(adresaci);
+        }
+        else if (wybor == '6')
+        {
+           edytujInformacjeOAdreacie(adresaci);
+        }
         else if (wybor == '9')
         {
             exit(0);
         }
     }
-
     return 0;
 }
-# Ksiazka-adresowa
+
